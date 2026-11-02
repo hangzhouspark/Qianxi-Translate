@@ -55,7 +55,15 @@ function closeEngine(reason = new Error("OCR 任务已取消。")) {
 
 function scheduleIdleCleanup() {
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => closeEngine(), 60_000);
+  idleTimer = setTimeout(async () => {
+    closeEngine();
+    try {
+      await chrome.offscreen?.closeDocument?.();
+    } catch {}
+    try {
+      window.close();
+    } catch {}
+  }, 60_000);
 }
 
 function callEngine(action, data, transfer = []) {
@@ -65,6 +73,7 @@ function callEngine(action, data, transfer = []) {
       pendingRequests.delete(id);
       reject(new Error("OCR 处理超时，请重试。"));
       closeEngine();
+      scheduleIdleCleanup();
     }, 120_000);
     pendingRequests.set(id, { resolve, reject, timer });
     engineFrame.contentWindow.postMessage(
@@ -134,7 +143,11 @@ async function readStatus() {
 
 async function handleOcrAction(action, dataUrl) {
   if (action === "ping") return { ready: true };
-  if (action === "status") return readStatus();
+  if (action === "status") {
+    const result = await readStatus();
+    scheduleIdleCleanup();
+    return result;
+  }
 
   if (action === "install") {
     if (status.state === "installed" || installTask) return status;
@@ -183,6 +196,7 @@ async function handleOcrAction(action, dataUrl) {
       total: OCR_MODEL_BYTES,
       downloaded: 0
     };
+    scheduleIdleCleanup();
     return status;
   }
 
