@@ -9,6 +9,7 @@
 - 删除 GitHub Releases 和版本标签。
 - 移除 Release 打包脚本和本地发布压缩包。
 - README 不再提供 Releases 下载入口。
+- README 不再显示 CHANGELOG 链接。
 - 保留 CHANGELOG 和 GitHub Actions 隐私检查。
 
 ## [1.9.10] - 2026-11-02
