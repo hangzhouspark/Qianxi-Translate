@@ -1,6 +1,15 @@
 # Changelog
 
-本项目从 `1.9.2` 起使用 Git 标签与 GitHub Releases 管理版本。每个可还原版本都会附带一份干净的源码 ZIP。
+所有版本变更记录在此文件中。
+
+## [1.9.11] - 2026-11-02
+
+### 仓库维护
+
+- 删除 GitHub Releases 和版本标签。
+- 移除 Release 打包脚本和本地发布压缩包。
+- README 不再提供 Releases 下载入口。
+- 保留 CHANGELOG 和 GitHub Actions 隐私检查。
 
 ## [1.9.10] - 2026-11-02
 
