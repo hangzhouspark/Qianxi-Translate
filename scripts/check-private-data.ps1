@@ -52,3 +52,4 @@ if ($matches.Count) {
 }
 
 Write-Output "Private-data scan passed."
+$global:LASTEXITCODE = 0
