@@ -402,11 +402,11 @@ function scheduleModelDetection(delay = 700) {
   }, delay);
 }
 
-function parseModelList(payload) {
+function parseModelList(payload, provider) {
   const items = Array.isArray(payload)
     ? payload
     : payload?.data ?? payload?.models ?? payload?.result ?? [];
-  return [
+  const models = [
     ...new Set(
       (Array.isArray(items) ? items : [])
         .map((item) =>
@@ -415,6 +415,12 @@ function parseModelList(payload) {
         .filter((model) => typeof model === "string" && model.trim())
     )
   ];
+  return provider?.id === "ollama-local"
+    ? models.filter(
+        (model) =>
+          !/(?:^|[/:_-])(?:embed|embedding|rerank)(?:$|[/:_-])/iu.test(model)
+      )
+    : models;
 }
 
 async function detectModelsForProvider(force = false) {
@@ -455,7 +461,7 @@ async function detectModelsForProvider(force = false) {
         apiKey
       }
     });
-    const models = parseModelList(payload);
+    const models = parseModelList(payload, provider);
     if (!models.length) throw new Error("接口未返回可用模型");
     if (requestVersion !== modelRequestVersion) return;
 
@@ -809,20 +815,34 @@ async function testProvider() {
   setBusy(elements.testProvider, true);
   elements.providerTestStatus.textContent = "测试中...";
   delete elements.providerTestStatus.dataset.tone;
+  let timeoutId;
   try {
     await saveSettings(collectSettings());
-    const result = await sendBackground({
-      type: "TEST_PROVIDER",
-      providerId: elements.provider.value
-    });
+    const result = await Promise.race([
+      sendBackground({
+        type: "TEST_PROVIDER",
+        providerId: elements.provider.value
+      }),
+      new Promise((_, reject) => {
+        timeoutId = window.setTimeout(
+          () => reject(new Error("服务连接测试超时，请检查本地模型或网络。")),
+          35_000
+        );
+      })
+    ]);
     elements.providerTestStatus.textContent = "连接成功";
     elements.providerTestStatus.dataset.tone = "success";
+    delete elements.providerTestStatus.title;
     setStatus(elements.settingsStatus, "服务连接测试通过。", "success");
   } catch (error) {
-    elements.providerTestStatus.textContent = "连接失败";
+    elements.providerTestStatus.textContent = error.message.includes("超时")
+      ? "连接超时"
+      : "连接失败";
     elements.providerTestStatus.dataset.tone = "error";
+    elements.providerTestStatus.title = error.message;
     setStatus(elements.settingsStatus, error.message, "error");
   } finally {
+    window.clearTimeout(timeoutId);
     setBusy(elements.testProvider, false);
   }
 }
