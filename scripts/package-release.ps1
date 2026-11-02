@@ -16,17 +16,7 @@ if ($manifest.version -ne $Version) {
   throw "Manifest version $($manifest.version) does not match requested version $Version."
 }
 
-$privateDataPattern = 'C:\\Users|E:\\CodexWorkspaces|D:\\AI|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{20,}|Bearer [A-Za-z0-9._-]{20,}'
-$privateData = git -C $root grep -l -I -E `
-  -e $privateDataPattern `
-  $Ref -- `
-  ":(exclude)licenses/*" `
-  ":(exclude)ocr-runtime/*NOTICES.txt" `
-  ":(exclude)ocr-runtime/*LICENSE.txt"
-
-if ($privateData) {
-  throw "Potential private data found in tracked files: $($privateData -join ', ')"
-}
+& (Join-Path $PSScriptRoot "check-private-data.ps1") -Ref $Ref
 
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 git -C $root archive `

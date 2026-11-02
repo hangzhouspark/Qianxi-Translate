@@ -1,0 +1,14 @@
+name: Privacy Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan tracked files for private data
+        shell: pwsh
+        run: ./scripts/check-private-data.ps1
