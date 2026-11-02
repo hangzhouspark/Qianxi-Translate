@@ -63,6 +63,8 @@ ollama pull qwen3:4b
 
 然后在 Qianxi-Translate 的“设置 → 服务配置”中选择“Ollama 本地模型”。扩展调用 `/v1/models` 自动读取本机已安装模型，无需手动填写模型名称。
 
+Ollama 请求默认关闭隐藏推理（`reasoning_effort: "none"`），避免 Qwen 等推理模型长时间生成内部思考而不返回译文。连接测试超过 30 秒会明确提示超时。
+
 本地服务请求使用扩展的后台 Service Worker 发起。为兼容 Ollama 对浏览器扩展来源的限制，扩展仅为本地 Ollama 请求申请 `declarativeNetRequestWithHostAccess` 权限。
 
 ### DeepSeek
