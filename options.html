@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qianxi-Translate 设置</title>
+    <link rel="stylesheet" href="options.css" />
+    <script type="module" src="options.js"></script>
+  </head>
+  <body>
+    <main class="settings-shell">
+      <header class="settings-header">
+        <div class="brand">
+          <img src="icons/icon-128.png" alt="" width="56" height="56" />
+          <div>
+            <span class="eyebrow">QIANXI TRANSLATE</span>
+            <h1>翻译设置</h1>
+            <p>集中管理整页、划词和图片翻译。</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="settings-grid">
+        <nav class="settings-nav" aria-label="设置分区">
+          <a href="#translationSection" aria-current="page">翻译</a>
+          <a href="#featuresSection">核心功能</a>
+          <a href="#providerSection">服务配置</a>
+          <a href="#advancedSection">高级</a>
+        </nav>
+
+        <div class="settings-content">
+          <section id="translationSection" class="settings-card">
+            <div class="section-heading">
+              <div>
+                <span class="section-index">01</span>
+                <h2>翻译方式</h2>
+              </div>
+              <p>设置默认语言、译文展示方式与翻译服务。</p>
+            </div>
+            <div class="form-grid">
+              <label>
+                <span>原文语言</span>
+                <select id="sourceLang"></select>
+              </label>
+              <label>
+                <span>目标语言</span>
+                <select id="targetLang"></select>
+              </label>
+              <label class="wide-field">
+                <span>译文显示模式</span>
+                <select id="displayMode"></select>
+                <small id="displayModeHint"></small>
+              </label>
+            </div>
+          </section>
+
+          <section id="featuresSection" class="settings-card">
+            <div class="section-heading">
+              <div>
+                <span class="section-index">02</span>
+                <h2>核心功能</h2>
+              </div>
+              <p>这些开关会实时同步到已打开的网页。</p>
+            </div>
+            <div class="feature-grid">
+              <article class="feature-card">
+                <div class="feature-title">
+                  <span class="feature-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M10 4v4M2 8h20M6 4v4" /></svg>
+                  </span>
+                  <div>
+                    <h3>整页翻译</h3>
+                  </div>
+                </div>
+                <span class="always-on">始终可用</span>
+              </article>
+
+              <article class="feature-card">
+                <div class="feature-title">
+                  <span class="feature-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 4h1a3 3 0 0 1 3 3 3 3 0 0 1 3-3h1M13 20h-1a3 3 0 0 1-3-3 3 3 0 0 1-3 3H5M5 16H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h1M13 8h7a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-7M9 7v10" /></svg>
+                  </span>
+                  <div>
+                    <h3>划词翻译</h3>
+                  </div>
+                </div>
+                <label class="toggle-control">
+                  <input id="selectionEnabled" type="checkbox" role="switch" />
+                  <span aria-hidden="true"></span>
+                </label>
+              </article>
+
+              <article class="feature-card image-feature-card">
+                <div class="feature-title">
+                  <span class="feature-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
+                  </span>
+                  <div>
+                    <h3>图片翻译</h3>
+                  </div>
+                </div>
+                <label class="toggle-control">
+                  <input id="imageEnabled" type="checkbox" role="switch" />
+                  <span aria-hidden="true"></span>
+                </label>
+                <div class="ocr-row">
+                  <div class="ocr-status-wrap">
+                    <span id="ocrStatus">正在检查 PaddleOCR PP-OCRv5 Mobile...</span>
+                    <progress id="ocrProgress" max="100" value="0" hidden></progress>
+                  </div>
+                  <button id="installOcr" class="mini-button" type="button">安装模型</button>
+                  <button id="removeOcr" class="mini-button danger" type="button" hidden>删除模型</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="providerSection" class="settings-card">
+            <div class="section-heading">
+              <div>
+                <span class="section-index">03</span>
+                <h2>服务配置</h2>
+              </div>
+              <p id="providerSummary">按当前翻译服务显示必要参数。</p>
+            </div>
+            <div class="provider-manager">
+              <div class="provider-manager-title">
+                <span>翻译服务</span>
+              </div>
+              <span class="provider-manager-label">当前服务</span>
+              <div class="provider-picker-row">
+                <div class="provider-picker">
+                  <button id="providerTrigger" class="provider-trigger" type="button" aria-expanded="false">
+                    <span id="providerTriggerLabel">选择翻译服务</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+                  </button>
+                  <select id="provider" class="provider-native" aria-label="当前翻译服务"></select>
+                  <div id="providerList" class="provider-list" role="listbox" aria-label="翻译服务列表" hidden></div>
+                </div>
+                <button id="addProvider" class="add-provider" type="button" title="添加 AI 翻译服务" aria-label="添加 AI 翻译服务">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </button>
+              </div>
+            </div>
+            <div id="providerFields" class="form-grid"></div>
+            <div class="provider-actions">
+              <button id="testProvider" class="button secondary" type="button">测试当前服务</button>
+              <span id="providerTestStatus" role="status" aria-live="polite"></span>
+            </div>
+          </section>
+
+          <section id="advancedSection" class="settings-card">
+            <div class="section-heading">
+              <div>
+                <span class="section-index">04</span>
+                <h2>高级</h2>
+              </div>
+              <p>控制缓存、代码注释和嵌入网页翻译。</p>
+            </div>
+            <div class="advanced-list">
+              <label class="setting-row">
+                <span>
+                  <strong>启用本地缓存</strong>
+                  <small>减少重复文本的翻译请求。</small>
+                </span>
+                <span class="switch">
+                  <input id="cacheEnabled" type="checkbox" role="switch" />
+                  <span aria-hidden="true"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <span>
+                  <strong>翻译代码注释</strong>
+                  <small>网页适合阅读代码时可开启。</small>
+                </span>
+                <span class="switch">
+                  <input id="codeCommentsEnabled" type="checkbox" role="switch" />
+                  <span aria-hidden="true"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <span>
+                  <strong>翻译嵌入网页</strong>
+                  <small>同步处理网页中的可访问 iframe。</small>
+                </span>
+                <span class="switch">
+                  <input id="framesEnabled" type="checkbox" role="switch" />
+                  <span aria-hidden="true"></span>
+                </span>
+              </label>
+            </div>
+            <div class="performance-settings">
+              <h3>性能设置</h3>
+              <fieldset class="performance-group">
+                <legend>通用性能</legend>
+                <div class="form-grid">
+                  <label>
+                    <span>默认分块大小</span>
+                    <input id="chunkSize" type="number" min="200" max="4000" step="100" inputmode="numeric" />
+                  </label>
+                  <label>
+                    <span>全局最大并发数</span>
+                    <input id="concurrency" type="number" min="1" max="8" step="1" inputmode="numeric" />
+                  </label>
+                </div>
+              </fieldset>
+              <fieldset class="performance-group">
+                <legend id="servicePerformanceTitle">当前服务</legend>
+                <label class="performance-inherit">
+                  <span>继承通用性能设置</span>
+                  <input id="inheritPerformance" type="checkbox" role="switch" />
+                  <span class="performance-switch" aria-hidden="true"></span>
+                </label>
+                <div id="servicePerformanceFields" class="form-grid">
+                  <label>
+                    <span>分块大小</span>
+                    <input id="serviceChunkSize" type="number" min="200" max="4000" step="100" inputmode="numeric" />
+                  </label>
+                  <label>
+                    <span>服务商并发数</span>
+                    <input id="serviceConcurrency" type="number" min="1" max="8" step="1" inputmode="numeric" />
+                  </label>
+                </div>
+                <p class="field-description">服务商并发数不会超过通用设置中的全局最大并发数。</p>
+              </fieldset>
+            </div>
+            <div class="advanced-reset">
+              <span>
+                <strong>恢复默认设置</strong>
+                <small>清除服务配置、API Key、语言和功能开关。</small>
+              </span>
+              <button id="resetSettings" class="button secondary danger-button" type="button">恢复默认</button>
+            </div>
+          </section>
+
+          <p id="settingsStatus" class="settings-status" role="status" aria-live="polite" hidden></p>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
