@@ -1,5 +1,7 @@
 # Qianxi-Translate
 
+版本变更见 [CHANGELOG.md](CHANGELOG.md)，可下载版本见 [GitHub Releases](https://github.com/hangzhouspark/Qianxi-Translate/releases)。
+
 Qianxi-Translate 是一款面向 Chromium 浏览器的轻量网页翻译扩展，基于 Manifest V3 构建。项目聚焦于三项核心能力：
 
 - **整个网页翻译**
