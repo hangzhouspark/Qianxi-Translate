@@ -1138,6 +1138,28 @@ footer { display: flex; flex: 0 0 auto; justify-content: space-between; align-it
 footer span { min-width: 0; }
 footer a { flex-shrink: 0; margin-left: auto; color: var(--accent); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
+.card.translation-mode { max-height: min(720px, calc(100vh - 24px)); }
+.translation-mode .body {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 72px;
+  max-height: clamp(120px, 31vh, 232px);
+  overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.translation-mode .body::-webkit-scrollbar { width: 8px; }
+.translation-mode .body::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 5%, var(--bg));
+}
+.translation-mode .body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 28%, transparent);
+  background-clip: padding-box;
+}
 @media (prefers-color-scheme: dark) {
   :host { --bg: var(--wp-selection-background, var(--wp-surface, #202a28)); --fg: var(--wp-selection-foreground, var(--wp-foreground, #e6eeea)); --accent: var(--wp-selection-accent, var(--wp-accent, #83d2c5)); }
 }

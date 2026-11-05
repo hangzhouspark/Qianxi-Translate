@@ -1301,6 +1301,112 @@ footer > a { display: none; }
 .tool-button, .swap-language, .speak, .footer-audio button, .retry, .submit-source { border-radius: 10px; }
 .dictionary-provider, .translation-service { border-radius: 10px; }
 .trigger-dot { border-radius: 11px; }
+.card.translation-mode { max-height: min(720px, calc(100vh - 24px)); }
+.translation-mode .source-preview,
+.translation-mode .body {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 72px;
+  max-height: clamp(120px, 31vh, 232px);
+  overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.translation-mode .source-preview {
+  margin: 0 14px 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.translation-mode .source-preview::before {
+  content: "原文";
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: block;
+  margin: -2px 0 8px;
+  padding: 2px 0 5px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+.translation-mode .body {
+  margin: 0 14px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+}
+.translation-mode .body .section-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: -2px 0 8px;
+  padding: 2px 0 5px;
+  background: var(--bg);
+}
+.card.translation-mode.selection-stacked-pane-height > .source-preview,
+.card.translation-mode.selection-stacked-pane-height > .body {
+  height: var(--selection-pane-height, auto);
+}
+.translation-mode .source-preview::-webkit-scrollbar,
+.translation-mode .body::-webkit-scrollbar { width: 8px; }
+.translation-mode .source-preview::-webkit-scrollbar-track,
+.translation-mode .body::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 5%, var(--bg));
+}
+.translation-mode .source-preview::-webkit-scrollbar-thumb,
+.translation-mode .body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 28%, transparent);
+  background-clip: padding-box;
+}
+@media (min-width: 900px) {
+  .card.translation-mode.selection-long-text {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    column-gap: 8px;
+    width: min(780px, calc(100vw - 24px));
+    height: min(64vh, 600px);
+    min-height: 430px;
+  }
+  .card.translation-mode.selection-long-text > header { grid-column: 1 / -1; grid-row: 1; }
+  .card.translation-mode.selection-long-text > .language-bar { grid-column: 1 / -1; grid-row: 2; }
+  .card.translation-mode.selection-long-text > .source-preview {
+    grid-column: 1;
+    grid-row: 3;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    margin: 0 0 12px 14px;
+  }
+  .card.translation-mode.selection-long-text > .body {
+    grid-column: 2;
+    grid-row: 3;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    margin: 0 14px 12px 0;
+  }
+  .card.translation-mode.selection-long-text > .source-actions {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  .card.translation-mode.selection-long-text > footer {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+}
 @media (prefers-color-scheme: dark) {
   :host { --bg: #ffffff; --fg: #0a0a0a; --muted: #666666; --line: #e1e1e1; --soft: #f5f5f5; --accent: #111111; }
 }

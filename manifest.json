@@ -47,6 +47,18 @@
       "all_frames": true,
       "match_about_blank": true,
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "selection-layout.js"
+      ],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_start"
     }
   ],
   "options_page": "options.html",
