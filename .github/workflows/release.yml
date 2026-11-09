@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Privacy check
+        shell: pwsh
+        run: ./scripts/check-private-data.ps1
+
+      - name: Build source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          mkdir -p dist
+          git archive --format=zip --prefix="Qianxi-Translate-${version}/" -o "dist/Qianxi-Translate-${version}-source.zip" HEAD
+          ls -lh dist
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          gh release create "$tag" "dist/Qianxi-Translate-${version}-source.zip" \
+            --title "Qianxi-Translate ${version} 正式版" \
+            --generate-notes

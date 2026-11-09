@@ -104,6 +104,14 @@ Base URL 配置完成后，扩展会调用 `/models` 自动检测可用模型。
 4. 点击“加载已解压的扩展程序”。
 5. 选择本项目根目录，即包含 `manifest.json` 的目录。
 
+### 从 Release 安装
+
+1. 打开 [Releases](https://github.com/hangzhouspark/Qianxi-Translate/releases)。
+2. 下载最新版本的 `Qianxi-Translate-<version>-source.zip` 并解压。
+3. 按上面的“从源码加载”步骤，选择解压后包含 `manifest.json` 的目录加载。
+
+Release 压缩包是完整源码包，不包含 API Key 或用户数据。
+
 ### 建议版本
 
 建议使用 2023 年以后发布的 Chromium 浏览器，以获得完整的 Manifest V3、Service Worker 和 WebAssembly 支持。
@@ -175,6 +183,15 @@ Base URL 配置完成后，扩展会调用 `/models` 自动检测可用模型。
 - 升级到 1.9.0 及以上版本时会清理旧版豆包设备标识、段落模式状态、悬浮球位置、已移除服务配置和旧翻译缓存。
 - 如需删除全部扩展配置，可在“设置 → 高级”中使用“恢复默认设置”。
 - 每次生成 Release 压缩包前都会运行隐私扫描，发现常见 API Key、Bearer Token 或本机路径时会终止打包。
+
+## 发布流程
+
+从 2.0 开始，推送 `v*` 标签会通过 GitHub Actions 自动创建 Release，并将源码压缩包作为 Release 资产上传。发布前会运行隐私扫描。
+
+```bash
+git tag -a v2.0 -m "Qianxi-Translate 2.0 正式版"
+git push origin v2.0
+```
 
 ## 项目结构
 
