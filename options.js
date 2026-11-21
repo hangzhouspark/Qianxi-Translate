@@ -67,6 +67,7 @@ const elements = {
   providerFields: document.querySelector("#providerFields"),
   providerSummary: document.querySelector("#providerSummary"),
   testProvider: document.querySelector("#testProvider"),
+  cancelDraft: document.querySelector("#cancelDraft"),
   providerTestStatus: document.querySelector("#providerTestStatus"),
   cacheEnabled: document.querySelector("#cacheEnabled"),
   codeCommentsEnabled: document.querySelector("#codeCommentsEnabled"),
@@ -85,6 +86,8 @@ const elements = {
 let settings;
 let ocrPoll;
 let providerMenuOpen = false;
+let draftMode = false;
+let draftProvider = null;
 let modelDetectionTimer;
 let modelRequestVersion = 0;
 let autoSaveTimer;
@@ -143,6 +146,7 @@ function render(value) {
   renderProviderManager();
   renderProviderFields();
   renderPerformanceSettings();
+  updateDraftUi();
 }
 
 function syncProviderSelect() {
@@ -153,28 +157,41 @@ function syncProviderSelect() {
 }
 
 function renderProviderManager() {
-  const provider = currentProvider();
+  const provider = draftMode ? null : currentProvider();
   elements.providerList.hidden = !providerMenuOpen;
   elements.providerTrigger.setAttribute("aria-expanded", String(providerMenuOpen));
-  elements.providerTriggerLabel.textContent = provider?.label || "选择翻译服务";
+  elements.providerTriggerLabel.textContent = draftMode
+    ? "新建 AI 服务"
+    : provider?.label || "选择翻译服务";
   elements.providerList.replaceChildren(
     ...settings.providers.filter(isAllowedProvider).map((item) => {
       const row = document.createElement("div");
       row.className = "service-row";
-      row.dataset.active = String(item.id === elements.provider.value);
+      row.dataset.active = String(
+        !draftMode && item.id === elements.provider.value
+      );
       row.dataset.providerId = item.id;
 
       const selectButton = document.createElement("button");
       selectButton.type = "button";
       selectButton.className = "service-select";
       selectButton.setAttribute("role", "option");
-      selectButton.setAttribute("aria-selected", String(item.id === elements.provider.value));
+      selectButton.setAttribute(
+        "aria-selected",
+        String(!draftMode && item.id === elements.provider.value)
+      );
       selectButton.innerHTML = '<span class="service-name"></span>';
       selectButton.querySelector(".service-name").textContent = item.label;
       selectButton.addEventListener("click", () => {
+        if (draftMode) {
+          draftMode = false;
+          draftProvider = null;
+          updateDraftUi();
+        }
         elements.provider.value = item.id;
         renderProviderManager();
         renderProviderFields();
+        renderPerformanceSettings();
       });
 
       const actions = document.createElement("div");
@@ -214,6 +231,7 @@ function renderProviderManager() {
 }
 
 function currentProvider() {
+  if (draftMode) return draftProvider;
   return settings.providers.find(
     (provider) => provider.id === elements.provider.value
   );
@@ -254,9 +272,20 @@ function renderProviderFields() {
   elements.providerFields.replaceChildren();
   elements.providerTestStatus.textContent = "";
   delete elements.providerTestStatus.dataset.tone;
+  delete elements.providerTestStatus.title;
   if (!provider) return;
 
-  elements.providerSummary.textContent = `${provider.label} · ${providerTypeLabel(provider.type, provider.id)}`;
+  elements.providerSummary.textContent = draftMode
+    ? "新建 AI 服务 · 尚未保存"
+    : `${provider.label} · ${providerTypeLabel(provider.type, provider.id)}`;
+
+  if (draftMode) {
+    const draftNote = document.createElement("div");
+    draftNote.className = "provider-note";
+    draftNote.textContent =
+      "这是尚未保存的新服务。填写显示名称、Base URL、API Key，选择模型并测试成功后，才会加入当前服务列表。";
+    elements.providerFields.append(draftNote);
+  }
 
   if (["openai-compatible", "deepseek", "zhipu-glm", "anthropic-compatible"].includes(provider.type)) {
     const systemPromptField = createTextareaField(
@@ -288,6 +317,14 @@ function renderProviderFields() {
       note.textContent =
         "请先在本机运行 Ollama。扩展会自动读取本地已安装模型，无需填写 API Key。";
       elements.providerFields.append(note);
+    }
+    if (draftMode) {
+      const labelInput = elements.providerFields.querySelector(
+        '[data-provider-field="label"]'
+      );
+      if (labelInput) labelInput.placeholder = "例如：我的 DeepSeek";
+      elements.providerTestStatus.textContent =
+        "填写完整后点击“测试并添加”。";
     }
     if (
       elements.providerFields.querySelector('[data-provider-field="baseURL"]')
@@ -543,20 +580,23 @@ async function deleteProvider(providerId) {
   setStatus(elements.settingsStatus, "服务配置已删除。", "success");
 }
 
-async function addCustomProvider() {
+function beginCustomProvider() {
+  if (draftMode) {
+    elements.providerFields
+      .querySelector('[data-provider-field="label"]')
+      ?.focus();
+    setStatus(
+      elements.settingsStatus,
+      "请先完成当前新服务的配置，或点击“取消”。",
+      "neutral"
+    );
+    return;
+  }
   cancelAutoSave();
-  const next = collectSettings();
-  const count =
-    next.providers.filter(
-      (provider) =>
-        provider.type === "openai-compatible" &&
-        provider.id.startsWith("custom-model-")
-    ).length + 1;
-  const id = `custom-model-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-  next.providers.push({
+  draftProvider = {
     type: "openai-compatible",
-    id,
-    label: `自定义 AI ${count}`,
+    id: `custom-model-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    label: "",
     enabled: true,
     performanceMode: "custom",
     chunkSize: 3200,
@@ -565,20 +605,135 @@ async function addCustomProvider() {
     apiKey: "",
     model: "",
     customModels: [],
+    requestTemplate: { enabled: false, headers: "{}", body: "{}" },
     systemPrompt:
       "You are a professional translation engine. Translate each input item into {{targetLang}} using a standard, formal, serious, careful, and faithful style. Preserve the original meaning, facts, tone, numbers, links, code-like tokens, placeholders such as ⟪QIANXI0⟫, and formatting. Do not add, omit, summarize, factually rewrite, exaggerate, or make the wording casual, playful, or conversational. Return only a JSON array of strings in the original order, without explanations or Markdown code fences."
-  });
-  next.hiddenProviderIds = (next.hiddenProviderIds || []).filter(
-    (hiddenId) => hiddenId !== id
-  );
-  next.activeProviderId = id;
-  settings = await saveSettings(next);
-  providerMenuOpen = true;
-  render(settings);
+  };
+  draftMode = true;
+  providerMenuOpen = false;
+  renderProviderManager();
+  renderProviderFields();
+  renderPerformanceSettings();
+  updateDraftUi();
   elements.providerFields
-    .querySelector('[data-provider-field="baseURL"]')
+    .querySelector('[data-provider-field="label"]')
     ?.focus();
-  setStatus(elements.settingsStatus, "已添加 AI 服务，请填写 Base URL。", "success");
+  setStatus(
+    elements.settingsStatus,
+    "请填写显示名称、Base URL、API Key，选择模型并测试成功后再添加服务。",
+    "neutral"
+  );
+}
+
+function updateDraftUi() {
+  elements.cancelDraft.hidden = !draftMode;
+  elements.testProvider.textContent = draftMode
+    ? "测试并添加"
+    : "测试当前服务";
+}
+
+function readProviderForm() {
+  const values = {};
+  for (const field of elements.providerFields.querySelectorAll(
+    "[data-provider-field]"
+  )) {
+    values[field.dataset.providerField] = field.value.trim();
+  }
+  return values;
+}
+
+function setDraftTestStatus(message, tone = "neutral", title = "") {
+  elements.providerTestStatus.textContent = message;
+  if (tone === "neutral") delete elements.providerTestStatus.dataset.tone;
+  else elements.providerTestStatus.dataset.tone = tone;
+  if (title) elements.providerTestStatus.title = title;
+  else delete elements.providerTestStatus.title;
+}
+
+async function testDraftProvider() {
+  if (!draftProvider) return;
+  cancelAutoSave();
+  const values = readProviderForm();
+  const required = [
+    ["label", "显示名称"],
+    ["baseURL", "Base URL"],
+    ["apiKey", "API Key"],
+    ["model", "模型"]
+  ];
+  const missing = required.find(([key]) => !values[key]);
+  if (missing) {
+    setDraftTestStatus(`请填写${missing[1]}。`, "error");
+    elements.providerFields
+      .querySelector(`[data-provider-field="${missing[0]}"]`)
+      ?.focus();
+    return;
+  }
+
+  Object.assign(draftProvider, values);
+  setBusy(elements.testProvider, true);
+  setDraftTestStatus("测试中...");
+  let timeoutId;
+  try {
+    const result = await Promise.race([
+      sendBackground({
+        type: "TEST_PROVIDER",
+        provider: { ...draftProvider }
+      }),
+      new Promise((_, reject) => {
+        timeoutId = window.setTimeout(
+          () => reject(new Error("服务连接测试超时，请检查本地模型或网络。")),
+          35_000
+        );
+      })
+    ]);
+    if (
+      typeof result?.translation !== "string" ||
+      !result.translation.trim()
+    ) {
+      throw new Error("服务未返回有效译文，请检查模型配置。");
+    }
+    const next = structuredClone(settings);
+    const newProvider = { ...draftProvider };
+    next.providers = [
+      ...next.providers.filter((provider) => provider.id !== newProvider.id),
+      newProvider
+    ];
+    next.activeProviderId = newProvider.id;
+    next.hiddenProviderIds = (next.hiddenProviderIds || []).filter(
+      (hiddenId) => hiddenId !== newProvider.id
+    );
+    settings = await saveSettings(next);
+    const label = newProvider.label;
+    draftMode = false;
+    draftProvider = null;
+    providerMenuOpen = false;
+    render(settings);
+    setDraftTestStatus("连接成功，服务已添加", "success");
+    setStatus(
+      elements.settingsStatus,
+      `服务“${label}”测试通过，已加入当前服务列表。`,
+      "success"
+    );
+  } catch (error) {
+    setDraftTestStatus(
+      error.message.includes("超时") ? "连接超时" : "连接失败",
+      "error",
+      error.message
+    );
+    setStatus(elements.settingsStatus, error.message, "error");
+  } finally {
+    window.clearTimeout(timeoutId);
+    setBusy(elements.testProvider, false);
+  }
+}
+
+function cancelDraft() {
+  if (!draftMode) return;
+  draftMode = false;
+  draftProvider = null;
+  providerMenuOpen = false;
+  render(settings);
+  setStatus(elements.settingsStatus, "已取消添加服务。", "neutral");
 }
 
 function handleProviderActionError(error) {
@@ -612,6 +767,11 @@ function updateDisplayModeHint() {
 
 function bindEvents() {
   elements.provider.addEventListener("change", () => {
+    if (draftMode) {
+      draftMode = false;
+      draftProvider = null;
+      updateDraftUi();
+    }
     renderProviderManager();
     renderProviderFields();
     renderPerformanceSettings();
@@ -622,14 +782,15 @@ function bindEvents() {
     renderProviderManager();
   });
   elements.addProvider.addEventListener("click", () => {
-    addCustomProvider().catch(handleProviderActionError);
+    beginCustomProvider();
   });
+  elements.cancelDraft.addEventListener("click", cancelDraft);
   elements.providerFields.addEventListener("input", (event) => {
     const field = event.target.closest?.("[data-provider-field]");
     if (field && ["baseURL", "apiKey"].includes(field.dataset.providerField)) {
       scheduleModelDetection();
     }
-    scheduleAutoSave();
+    if (!draftMode) scheduleAutoSave();
   });
   elements.providerFields.addEventListener("change", scheduleAutoSave);
   elements.sourceLang.addEventListener("change", scheduleAutoSave);
@@ -718,11 +879,13 @@ function setupNavigationSpy() {
 }
 
 function collectSettings() {
-  const provider = currentProvider();
+  const provider = draftMode ? null : currentProvider();
   const next = structuredClone(settings);
   next.sourceLang = elements.sourceLang.value;
   next.targetLang = elements.targetLang.value;
-  next.activeProviderId = elements.provider.value;
+  next.activeProviderId = draftMode
+    ? settings.activeProviderId
+    : elements.provider.value;
   next.translationDisplayMode = elements.displayMode.value;
   next.selectionTranslation = {
     ...(next.selectionTranslation || {}),
@@ -773,6 +936,7 @@ function collectSettings() {
 }
 
 function scheduleAutoSave(delay = 450) {
+  if (draftMode) return;
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => {
     flushAutoSave().catch(() => {});
@@ -811,6 +975,10 @@ async function flushAutoSave() {
 }
 
 async function testProvider() {
+  if (draftMode) {
+    await testDraftProvider();
+    return;
+  }
   cancelAutoSave();
   setBusy(elements.testProvider, true);
   elements.providerTestStatus.textContent = "测试中...";
